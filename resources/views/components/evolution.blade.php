@@ -75,39 +75,26 @@
             };
 
             async function getSectors() {
-                const r = await fetch('{{ $api_base_url }}/latest');
+                const r = await fetch('/api/pbg/sectors');
                 const j = await r.json();
-                if (!j?.data?.data) return [];
-                
-                // Convertir datos de latest a formato {code, description}
-                // Solo incluir sectores principales (1 letra) + PBG para el gráfico de evolución
-                const sectors = j.data.data
-                    .filter(item => item.letra.length === 1 || item.letra === 'PBG')
-                    .map(item => ({
-                        code: item.letra,
-                        description: `${item.letra} - ${item.descripcion}`,
-                        isMainSector: true
-                    }));
-                
-                return sectors;
+                // Filtrar solo sectores principales (main_sectors)
+                return j?.data?.main_sectors ?? [];
             }
-            async function getSectorData(code) {
-                const r = await fetch(`{{ $api_base_url }}/sector/${encodeURIComponent(code)}`);
-                if (!r.ok) return null;
+            async function getSectorSeries(code) {
+                const r = await fetch(`/api/pbg/sector/${encodeURIComponent(code)}`);
                 const j = await r.json();
                 
-                // Para gráfico de evolución, solo queremos datos del sector específico
-                // No incluir subsectores (filtrar solo filas donde letra === code exactamente)
-                const allData = j?.data ?? [];
-                const sectorData = allData.filter(item => item.letra === code);
-                
-                console.log(`Filtrando datos para sector ${code}: ${allData.length} filas totales, ${sectorData.length} del sector principal`);
-                
-                return sectorData;
+                // Si es PBG o un sector específico, usar data directamente
+                if (j?.data?.data) {
+                    return j.data.data;
+                }
+                // Si es un sector principal con subsectores, usar el sector principal
+                if (j?.data?.subsectors) {
+                    const mainSector = j.data.subsectors.find(s => s.sector === code);
+                    return mainSector?.data ?? [];
+                }
+                return [];
             }
-
-            // Alias para mantener compatibilidad
-            const getSectorSeries = getSectorData;
 
             function pick(o, ...keys) { for (const k of keys) { if (o?.[k] !== undefined && o?.[k] !== null) return o[k]; } return null; }
 
@@ -218,16 +205,10 @@
 
             async function populateSelectorIfNeeded() {
                 // Verificar si el selector está vacío o solo tiene el placeholder
-                if (selector.options.length > 1) {
-                    console.log('✅ Selector ya popolado con', selector.options.length, 'opciones');
-                    return;
-                }
+                if (selector.options.length > 1) return;
                 
                 try {
-                    console.log('🔄 Cargando sectores desde API...');
                     const sectors = await getSectors(); // [{code, description}]
-                    console.log('📊 Sectores obtenidos:', sectors);
-                    
                     selector.innerHTML = '<option value="">Selecciona un sector para analizar...</option>';
                     
                     // Ordenar sectores: PBG primero, luego A-P
@@ -237,9 +218,6 @@
                         return a.code.localeCompare(b.code);
                     });
                     
-                    console.log('🔄 Agregando', sortedSectors.length, 'sectores principales al selector');
-                    
-                    // Agregar solo sectores principales (sin agrupación)
                     sortedSectors.forEach(s => {
                         const opt = document.createElement('option');
                         opt.value = s.code; 
@@ -251,24 +229,18 @@
                     const prefer = ['PBG', 'G', 'A', 'K', 'D', 'L'];
                     const found = sortedSectors.find(s => prefer.includes(s.code));
                     if (found) {
-                        console.log('🎯 Seleccionando sector por defecto:', found.code);
                         selector.value = found.code;
                     }
-                    
-                    console.log('✅ Selector poblado exitosamente');
                 } catch (e) {
-                    console.error('❌ Error loading sectors:', e);
-                    selector.innerHTML = '<option value="">❌ Error cargando sectores - Verifica conexión API</option>';
+                    console.error('Error loading sectors:', e);
+                    selector.innerHTML = '<option value="">Error cargando sectores</option>';
                 }
             }
 
             async function refresh() {
                 try {
                     const code = selector.value;
-                    console.log('🔄 Refresh solicitado para sector:', code);
-                    
                     if (!code) {
-                        console.log('⚠️ Sin sector seleccionado, limpiando gráficos');
                         renderEvolution([], []); 
                         renderVariation([], []);
                         return;
@@ -277,25 +249,20 @@
                     showLoader(elEvolution, 'Cargando evolución...'); 
                     showLoader(elVariation, 'Cargando variaciones...');
                     
-                    console.log('📡 Obteniendo datos para sector:', code);
                     const rows = await getSectorSeries(code);
-                    console.log('📊 Datos recibidos:', rows ? rows.length : 0, 'filas');
                     
                     if (!rows || rows.length === 0) {
                         throw new Error('No se encontraron datos para este sector');
                     }
                     
                     const { years, values, yoy } = normalizeSeries(rows);
-                    console.log('✨ Datos normalizados - años:', years.length, 'valores:', values.length);
-                    
                     renderEvolution(years, values);
                     renderVariation(years, yoy);
-                    console.log('✅ Gráficos renderizados exitosamente');
                 } catch (e) {
-                    console.error('❌ Error loading sector data:', e);
+                    console.error('Error loading sector data:', e);
                     // Mostrar mensaje de error en lugar de gráficos vacíos
-                    elEvolution.parentElement.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-exclamation-triangle me-2"></i>Error al cargar datos del sector</div>';
-                    elVariation.parentElement.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-exclamation-triangle me-2"></i>Error al cargar datos del sector</div>';
+                    elEvolution.parentElement.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-exclamation-triangle me-2"></i>Error al cargar datos</div>';
+                    elVariation.parentElement.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-exclamation-triangle me-2"></i>Error al cargar datos</div>';
                 } finally {
                     hideLoader(elEvolution); 
                     hideLoader(elVariation);

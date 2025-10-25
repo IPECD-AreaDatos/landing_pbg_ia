@@ -38,12 +38,9 @@
         (function () {
             const evolutionEl = document.getElementById('evolutionChart');
             if (!evolutionEl || !window.Chart) return;
-            
-            // Evitar conflictos - crear variable local para este gráfico
-            let mainEvolutionChart;
 
-            const chartData = @json($chart_data);
-            const evo = chartData.evolution ?? [];              // [{año, valor}]
+            const chartData = @json($chartData);
+            const evo = chartData.evolution_pbg_by_year ?? [];              // [{year, value}]
             
             // Validar datos antes de crear el gráfico
             if (!evo || evo.length === 0) {
@@ -58,13 +55,13 @@
                 return;
             }
             
-            const labels = evo.map(i => String(i.año));
-            const seriesRaw = evo.map(i => Number(i.valor));                // VALOR COMPLETO (pesos 2004)
+            const labels = evo.map(i => String(i.year));
+            const seriesRaw = evo.map(i => Number(i.value));                // VALOR COMPLETO (pesos 2004)
 
             const fmtCompact = new Intl.NumberFormat('es-AR', { notation: 'compact', compactDisplay: 'short', maximumFractionDigits: 1 });
             const fmtFull = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
 
-            mainEvolutionChart = new Chart(evolutionEl.getContext('2d'), {
+            new Chart(evolutionEl.getContext('2d'), {
                 type: 'line',
                 data: {
                     labels,
@@ -73,26 +70,13 @@
                         data: seriesRaw,
                         borderColor: '#76B82A',
                         backgroundColor: 'rgba(118, 184, 42, 0.1)',
-                        borderWidth: 4,
+                        borderWidth: 3,
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointHoverRadius: 8,
-                        pointBorderWidth: 3,
-                        pointBorderColor: '#fff',
-                        pointBackgroundColor: '#76B82A',
-                        pointHoverBackgroundColor: '#76B82A',
-                        pointHoverBorderColor: '#fff',
-                        pointHoverBorderWidth: 3,
-                        // Agregar sombra al área
-                        segment: {
-                            borderColor: ctx => {
-                                const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 400);
-                                gradient.addColorStop(0, '#76B82A');
-                                gradient.addColorStop(1, 'rgba(118, 184, 42, 0.6)');
-                                return gradient;
-                            }
-                        }
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 2,
+                        pointBorderColor: '#fff'
                     }]
                 },
                 options: {
@@ -101,30 +85,15 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleColor: '#fff',
                             bodyColor: '#fff',
                             borderColor: '#76B82A',
-                            borderWidth: 2,
-                            cornerRadius: 8,
-                            displayColors: false,
-                            padding: 12,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
+                            borderWidth: 1,
                             callbacks: {
-                                label: (ctx) => {
-                                    const value = fmtFull.format(ctx.parsed.y);
-                                    const prevValue = ctx.dataIndex > 0 ? seriesRaw[ctx.dataIndex - 1] : null;
-                                    let change = '';
-                                    if (prevValue) {
-                                        const changePercent = ((ctx.parsed.y - prevValue) / prevValue * 100);
-                                        const changeIcon = changePercent >= 0 ? '↗' : '↘';
-                                        const changeColor = changePercent >= 0 ? '🟢' : '🔴';
-                                        change = `\n${changeColor} ${changeIcon} ${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(1)}% vs año anterior`;
-                                    }
-                                    return `💰 $${value} (pesos 2004)${change}`;
-                                },
-                                title: (ctx) => `📅 Año ${ctx[0].label}`
+                                // Tooltip con valor COMPLETO formateado en pesos
+                                label: (ctx) => ` ${fmtFull.format(ctx.parsed.y)} $ (2004)`,
+                                title: (ctx) => `Año ${ctx[0].label}`
                             }
                         }
                     },
@@ -157,49 +126,22 @@
             const sectorEl = document.getElementById('sectorChart');
             if (!sectorEl || !window.Chart) return;
 
-            // Usar los datos de sectores desde chart_data
-            const chartData = @json($chart_data);
-            const raw = chartData.sectors || [];
-            const data = raw.filter(it => (it.letra || '').trim().toUpperCase() !== 'PBG'); // excluye total
-            
-            // Calcular porcentajes y ordenar por valor descendente
-            const dataWithPercentage = data.map(item => {
-                const totalPbg = chartData.total_pbg || 1;
-                const percentage = (Number(item.valor) / totalPbg) * 100;
-                return {
-                    ...item,
-                    percentage: percentage,
-                    formattedPercentage: percentage.toFixed(1)
-                };
-            });
-            
-            // Ordenar por porcentaje descendente y tomar top 10
-            const top = dataWithPercentage
-                .sort((a, b) => b.percentage - a.percentage)
-                .slice(0, 10);
+            // Tus datos de sectores ya vienen como porcentajes en $pbgData (según tu DashboardController),
+            // pero nos aseguramos de excluir "PBG" por si estuviera.
+            const raw = @json($pbgData->sortByDesc('value')->values());
+            const data = raw.filter(it => (it.sector || '').trim().toUpperCase() !== 'PBG'); // excluye total
+            const top = data.slice(0, 10);
 
-            // Crear gradiente para las barras
-            const ctx = sectorEl.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, '#76B82A');
-            gradient.addColorStop(1, 'rgba(118, 184, 42, 0.7)');
-            
             new Chart(sectorEl.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: top.map(it => it.descripcion.length > 30 ? 
-                        it.descripcion.substring(0, 27) + '...' : it.descripcion),
+                    labels: top.map(it => it.sector),
                     datasets: [{
                         label: 'Participación (%)',
-                        data: top.map(it => parseFloat(it.formattedPercentage)),
-                        backgroundColor: gradient,
-                        borderColor: '#76B82A',
-                        borderWidth: 2,
-                        borderRadius: 6,
+                        data: top.map(it => Number(it.value)), // ya viene en %
+                        backgroundColor: '#76B82A',
+                        borderRadius: 4,
                         borderSkipped: false,
-                        hoverBackgroundColor: '#5a9625',
-                        hoverBorderColor: '#4a7b1f',
-                        hoverBorderWidth: 3
                     }]
                 },
                 options: {
@@ -208,26 +150,15 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: '#76B82A',
-                            borderWidth: 2,
-                            cornerRadius: 8,
-                            displayColors: false,
-                            padding: 12,
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
                             callbacks: {
-                                title: (ctx) => {
-                                    const item = top[ctx[0].dataIndex];
-                                    return `📊 ${item.descripcion}`;
-                                },
+                                // Si además querés mostrar el valor absoluto en millones (lo tenés en value_absolute)
                                 label: (ctx) => {
                                     const item = top[ctx.dataIndex];
-                                    const pct = Number(ctx.parsed.y).toFixed(1) + '%';
-                                    const valor = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(item.valor);
-                                    return [`📈 Participación: ${pct}`, `💰 Valor: $${valor} (miles, 2004)`];
+                                    const pct = Number(ctx.parsed.y).toFixed(2) + '%';
+                                    const abs = (item.value_absolute !== undefined)
+                                        ? `  •  $${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(item.value_absolute)}M`
+                                        : '';
+                                    return ` ${pct}${abs}`;
                                 }
                             }
                         }
@@ -235,37 +166,16 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { 
-                                color: 'rgba(241, 245, 249, 0.8)',
-                                drawBorder: false
-                            },
-                            border: { display: false },
+                            grid: { color: '#f1f5f9' },
                             ticks: {
                                 color: '#64748b',
-                                font: { size: 12 },
-                                callback: (v) => v.toFixed(1) + '%',
-                                padding: 10
+                                callback: (v) => v + '%'
                             }
                         },
                         x: {
                             grid: { display: false },
-                            border: { display: false },
-                            ticks: { 
-                                color: '#64748b', 
-                                maxRotation: 45, 
-                                minRotation: 0,
-                                font: { size: 11 },
-                                padding: 10
-                            }
+                            ticks: { color: '#64748b', maxRotation: 45, autoSkip: false }
                         }
-                    },
-                    animation: {
-                        duration: 1200,
-                        easing: 'easeInOutQuart'
-                    },
-                    // Hover effects
-                    onHover: (event, activeElements) => {
-                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
                     }
                 }
             });

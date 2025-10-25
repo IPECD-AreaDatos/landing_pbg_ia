@@ -1,4 +1,3 @@
-# Laravel
 /.phpunit.cache
 /node_modules
 /public/build
@@ -10,31 +9,35 @@
 .env.backup
 .env.production
 .env.local
-.env.nodejs
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
 auth.json
-
-# Logs
 npm-debug.log
 yarn-error.log
-/storage/logs/*.log
-
-# IDEs
 /.fleet
 /.idea
 /.vscode
 
-# OS
+# Logs
+*.log
+/storage/logs/*.log
+
+# Cache
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Development files
-vercel-env-variables-nodejs.txt
-DEPLOY.md
-*.tmp
-*.temp
-
-# Vercel (already in .vercelignore)
+# Vercel
 .vercel

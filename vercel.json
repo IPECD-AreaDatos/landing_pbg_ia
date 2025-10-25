@@ -1,48 +1,21 @@
 {
     "version": 2,
     "functions": {
-        "api/index.js": {
-            "runtime": "@vercel/node"
-        },
-        "api/dashboard.php": {
-            "runtime": "vercel-php@0.6.0"
-        }
+        "api/index.php": { "runtime": "vercel-php@0.6.0" }
     },
-    "rewrites": [
+    "routes": [
         {
-            "source": "/api/pbg/(.*)",
-            "destination": "/api/index.js"
+            "src": "/(css|js|images|fonts|favicon.ico)",
+            "headers": {
+                "cache-control": "max-age=31536000"
+            }
         },
-        {
-            "source": "/dashboard",
-            "destination": "/api/dashboard.php"
-        },
-        {
-            "source": "/",
-            "destination": "/api/dashboard.php"
-        },
-        {
-            "source": "/css/(.*)",
-            "destination": "/public/css/$1"
-        },
-        {
-            "source": "/js/(.*)",
-            "destination": "/public/js/$1"
-        },
-        {
-            "source": "/images/(.*)",
-            "destination": "/public/images/$1"
-        },
-        {
-            "source": "/favicon.ico",
-            "destination": "/public/favicon.ico"
-        }
+        { "src": "/(.*)", "dest": "/api/index.php" }
     ],
     "env": {
-        "APP_NAME": "@app_name",
-        "APP_ENV": "@app_env",
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
         "APP_KEY": "@app_key",
-        "APP_DEBUG": "@app_debug",
         "APP_URL": "@app_url",
         "DB_CONNECTION": "@db_connection",
         "DB_HOST": "@db_host",
@@ -50,22 +23,19 @@
         "DB_DATABASE": "@db_database",
         "DB_USERNAME": "@db_username",
         "DB_PASSWORD": "@db_password",
-        "LOG_CHANNEL": "@log_channel"
+        "APP_CONFIG_CACHE": "/tmp",
+        "APP_EVENTS_CACHE": "/tmp",
+        "APP_PACKAGES_CACHE": "/tmp",
+        "APP_ROUTES_CACHE": "/tmp",
+        "APP_SERVICES_CACHE": "/tmp",
+        "VIEW_COMPILED_PATH": "/tmp",
+        "CACHE_DRIVER": "array",
+        "LOG_CHANNEL": "stderr",
+        "SESSION_DRIVER": "cookie"
     },
-    "headers": [
-        {
-            "source": "/api/pbg/(.*)",
-            "headers": [
-                { "key": "Access-Control-Allow-Origin", "value": "*" },
-                { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-                { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
-            ]
-        },
-        {
-            "source": "/(css|js|images)/(.*)",
-            "headers": [
-                { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-            ]
+    "build": {
+        "env": {
+            "COMPOSER_MIRROR_PATH_REPOS": "1"
         }
-    ]
+    }
 }

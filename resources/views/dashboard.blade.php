@@ -78,42 +78,14 @@
         border-radius: 8px;
         margin-bottom: 1rem;
     }
-
-    .sector-value {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #76B82A;
-    }
-
-    .sector-variation {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
 </style>
 @endpush
 
 @section('content')
-
-    <!-- Loading Backdrop -->
-    <div id="loading-backdrop" class="loading-backdrop">
-        <div class="text-center">
-            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                <span class="visually-hidden">Cargando...</span>
-            </div>
-            <div class="mt-3 text-white">
-                <strong>Cargando datos del PBG...</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- Error Container -->
-    <div id="error-container" style="display: none;"></div>
-
     <!-- Hero Section -->
     @include('components.hero-section')
 
     <!-- Key Indicators -->
-    <!-- DEBUG: Incluir indicadores -->
     @include('components.indicators')
 
     <!-- Charts Section -->
@@ -125,19 +97,3 @@
     <!-- Interactive Evolution -->
     @include('components.evolution')
 @endsection
-
-@push('scripts')
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Dashboard API Manager -->
-<script src="{{ asset('js/dashboard-api.js') }}"></script>
-
-<script>
-    // Configurar URL de la API
-    window.API_BASE_URL = '{{ $api_base_url }}';
-    
-    // El dashboard se inicializará automáticamente cuando se cargue el DOM
-    console.log('Dashboard configurado para usar API:', window.API_BASE_URL);
-</script>
-@endpush

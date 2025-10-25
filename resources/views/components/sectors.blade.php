@@ -47,17 +47,17 @@
         @endphp
 
         <div class="sector-grid">
-            @foreach(collect($chart_data['sectors'] ?? [])->sortByDesc('valor') as $i => $sector)
+            @foreach($pbgData->sortByDesc('value')->values() as $i => $sector)
                 @php
                     $bg = $palette[$i % count($palette)];
-                    $icon = iconFor($sector['descripcion'], $icons);
-                    $yoy = $sector['variacion_interanual'] ?? null; // puede ser null si no hay año previo
-                    $hasSubsectors = strlen($sector['letra']) === 1; // Solo sectores A-P tienen subsectores
+                    $icon = iconFor($sector->sector, $icons);
+                    $yoy = $sector->yoy; // puede ser null si no hay año previo
+                    $hasSubsectors = strlen($sector->code) === 1; // Solo sectores A-P tienen subsectores
                 @endphp
 
                 <div class="sector-card {{ $hasSubsectors ? 'clickable' : '' }}" 
                      @if($hasSubsectors) 
-                     data-sector-code="{{ $sector['letra'] }}" 
+                     data-sector-code="{{ $sector->code }}" 
                      onclick="toggleSubsectors(this)" 
                      @endif>
                     
@@ -68,7 +68,7 @@
 
                         <div class="sector-content">
                             <div class="sector-header">
-                                <div class="sector-name">{{ $sector['descripcion'] }}</div>
+                                <div class="sector-name">{{ $sector->sector }}</div>
                                 @if($hasSubsectors)
                                     <div class="expand-indicator">
                                         <i class="fas fa-chevron-down"></i>
@@ -78,16 +78,12 @@
 
                             <div class="sector-row">
                                 <div class="sector-value">
-                                    @php
-                                        $totalPbg = $chart_data['total_pbg'] ?? 1;
-                                        $percentage = ($sector['valor'] / $totalPbg) * 100;
-                                    @endphp
-                                    {{ number_format($percentage, 1) }}%
+                                    {{ number_format($sector->value, 1) }}%
                                     <small class="text-muted d-block">participación</small>
                                 </div>
 
                                 <div class="sector-amount">
-                                    ${{ number_format($sector['valor'], 0, ',', '.') }}
+                                    ${{ number_format($sector->value_absolute, 0, ',', '.') }}
                                     <small class="text-muted d-block">{{ $statistics['max_year'] }} · en miles de pesos precios 2004</small>
                                 </div>
                             </div>
@@ -151,45 +147,20 @@
         }
         
         try {
-            // Cargar datos de subsectores desde la API
-            console.log(`Cargando subsectores para sector: ${sectorCode}`);
-            const response = await fetch(`{{ $api_base_url }}/sector/${sectorCode}`);
-            
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            
+            // Cargar datos de subcategorías desde la API
+            const response = await fetch(`/api/pbg/sector/${sectorCode}`);
             const data = await response.json();
-            console.log('Datos de sector recibidos:', data);
             
-            if (data.data && data.data.length > 0) {
-                // Procesar datos: agrupar por subsector
-                const subsectorMap = {};
+            if (data.data && data.data.subsectors) {
+                // Obtener el año más reciente
+                const latestYear = {{ $statistics['max_year'] }};
                 
-                data.data.forEach(item => {
-                    if (!subsectorMap[item.letra]) {
-                        subsectorMap[item.letra] = {
-                            code: item.letra,
-                            description: item.descripcion,
-                            data: []
-                        };
-                    }
-                    subsectorMap[item.letra].data.push({
-                        year: item.año,
-                        value: parseFloat(item.valor),
-                        yoy_variation: item.variacion_interanual ? parseFloat(item.variacion_interanual) : null
-                    });
-                });
-                
-                const subsectors = Object.values(subsectorMap);
-                console.log('Subsectores procesados:', subsectors.length);
-                
-                renderSubsectors(cardElement, subsectors, {{ $statistics['max_year'] }});
+                // Renderizar subcategorías
+                renderSubsectors(cardElement, data.data.subsectors, latestYear);
+                loader.style.display = 'none';
             } else {
-                subsectorsGrid.innerHTML = '<div class="text-center text-muted p-3">No hay subcategorías disponibles</div>';
+                throw new Error('No se encontraron subcategorías');
             }
-            
-            loader.style.display = 'none';
         } catch (error) {
             console.error('Error loading subsectors:', error);
             subsectorsGrid.innerHTML = '<div class="text-center text-muted p-3">Error al cargar subcategorías</div>';

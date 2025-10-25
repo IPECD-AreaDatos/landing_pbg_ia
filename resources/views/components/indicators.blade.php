@@ -49,9 +49,9 @@
                         <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="indicator-value primary">
-                        ${{ number_format(($chart_data['total_pbg'] ?? 0) / 1000000, 1) }}B
+                        $ {{ number_format($statistics['latest_pbg_value'], 1) }}M
                     </div>
-                    <div class="indicator-label">Valor PBG {{ $statistics['latest_pbg_year'] ?? 2024 }}</div>
+                    <div class="indicator-label">Valor PBG {{ $statistics['latest_pbg_year'] }}</div>
                     <div class="indicator-change change-muted">Precios constantes 2004</div>
                 </div>
             </div>
