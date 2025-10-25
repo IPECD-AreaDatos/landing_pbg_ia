@@ -1,0 +1,71 @@
+{
+    "version": 2,
+    "functions": {
+        "api/index.js": {
+            "runtime": "nodejs18.x"
+        },
+        "api/dashboard.php": {
+            "runtime": "vercel-php@0.6.0"
+        }
+    },
+    "routes": [
+        {
+            "src": "/api/pbg/(.*)",
+            "dest": "/api/index.js"
+        },
+        {
+            "src": "/dashboard",
+            "dest": "/api/dashboard.php"
+        },
+        {
+            "src": "/",
+            "dest": "/api/dashboard.php"
+        },
+        {
+            "src": "/css/(.*)",
+            "dest": "/public/css/$1"
+        },
+        {
+            "src": "/js/(.*)",
+            "dest": "/public/js/$1"
+        },
+        {
+            "src": "/images/(.*)",
+            "dest": "/public/images/$1"
+        },
+        {
+            "src": "/favicon.ico",
+            "dest": "/public/favicon.ico"
+        }
+    ],
+    "env": {
+        "APP_NAME": "@app_name",
+        "APP_ENV": "@app_env",
+        "APP_KEY": "@app_key",
+        "APP_DEBUG": "@app_debug",
+        "APP_URL": "@app_url",
+        "DB_CONNECTION": "@db_connection",
+        "DB_HOST": "@db_host",
+        "DB_PORT": "@db_port",
+        "DB_DATABASE": "@db_database",
+        "DB_USERNAME": "@db_username",
+        "DB_PASSWORD": "@db_password",
+        "LOG_CHANNEL": "@log_channel"
+    },
+    "headers": [
+        {
+            "source": "/api/pbg/(.*)",
+            "headers": [
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+                { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+            ]
+        },
+        {
+            "source": "/(css|js|images)/(.*)",
+            "headers": [
+                { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+            ]
+        }
+    ]
+}

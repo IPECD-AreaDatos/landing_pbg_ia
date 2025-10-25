@@ -1,0 +1,36 @@
+# Development dependencies
+/node_modules
+/tests
+
+# Environment files
+.env.local
+.env.backup
+.env.testing
+
+# Development tools
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+
+# IDEs and editors
+/.fleet
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db
+
+# Laravel storage (will be created dynamically)
+/storage/logs/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+
+# Keep directory structure
+!storage/logs/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore  
+!storage/framework/testing/.gitignore
+!storage/framework/views/.gitignore
