@@ -49,8 +49,8 @@ $data = PbgData::byYear(2023)
 ## Deployment & Environment
 
 ### Vercel Configuration
-- Entry point: `api/index.php`
-- Laravel bootstrap adapted for serverless
+- API Entry point: `api/index.js` (Node.js Express API)
+- Dashboard Entry point: `api/dashboard.php` (Laravel serverless function)
 - Environment variables use `@variable_name` format in `vercel.json`
 - Static assets cached for 1 year
 
