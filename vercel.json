@@ -8,34 +8,34 @@
             "runtime": "vercel-php@0.6.0"
         }
     },
-    "routes": [
+    "rewrites": [
         {
-            "src": "/api/pbg/(.*)",
-            "dest": "/api/index.js"
+            "source": "/api/pbg/(.*)",
+            "destination": "/api/index.js"
         },
         {
-            "src": "/dashboard",
-            "dest": "/api/dashboard.php"
+            "source": "/dashboard",
+            "destination": "/api/dashboard.php"
         },
         {
-            "src": "/",
-            "dest": "/api/dashboard.php"
+            "source": "/",
+            "destination": "/api/dashboard.php"
         },
         {
-            "src": "/css/(.*)",
-            "dest": "/public/css/$1"
+            "source": "/css/(.*)",
+            "destination": "/public/css/$1"
         },
         {
-            "src": "/js/(.*)",
-            "dest": "/public/js/$1"
+            "source": "/js/(.*)",
+            "destination": "/public/js/$1"
         },
         {
-            "src": "/images/(.*)",
-            "dest": "/public/images/$1"
+            "source": "/images/(.*)",
+            "destination": "/public/images/$1"
         },
         {
-            "src": "/favicon.ico",
-            "dest": "/public/favicon.ico"
+            "source": "/favicon.ico",
+            "destination": "/public/favicon.ico"
         }
     ],
     "env": {
